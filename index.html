@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<script src="js/three.min.js"></script>
+<script src="js/dat.gui.min.js"></script>
+<script src="js/stats.min.js"></script>
+<script src="js/GLTFLoader.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script>
+    let scene, camera, renderer, controls, guiControls;
+    let stats = initStats();
+
+    /* 场景 */
+    function initScene() {
+        scene = new THREE.Scene();
+    }
+
+    /* 相机 */
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 3);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+    }
+
+    /* 渲染器 */
+    function initRender() {
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x400206);
+        document.body.appendChild(renderer.domElement);
+    }
+
+    /* 灯光 */
+    function initLight() {
+        var light = new THREE.PointLight( 0xf11212, 1.5, 2000 );
+        light.position.set( 0, 30, -20 );
+        light.castShadow = true;
+        light.shadow.mapSize.width = 1024;
+        light.shadow.mapSize.height = 1024;
+        scene.add( light );
+    }
+
+    /* 控制器 */
+    function initControls() {
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+    }
+
+    /* 调试插件 */
+    function initGui() {
+        guiControls = new function () {
+        };
+        let controls = new dat.GUI({width: 200});
+    }
+
+    /* 场景中的内容 */
+    function initContent() {
+        // 加载 glTF 格式的模型
+        let loader = new THREE.GLTFLoader();/*实例化加载器*/
+        loader.load('model/scene.gltf',function (obj) {
+            obj.scene.traverse( function ( child ) {
+                if ( child.isMesh ) {
+                    child.material.emissive =  child.material.color;
+                    child.material.emissiveMap = child.material.map ;
+                }
+            } );
+            console.log(obj);
+            obj.scene.position.y = 0;
+            scene.add(obj.scene);
+        },function (xhr) {
+            console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        },function (error) {
+            console.log('load error!'+error.getWebGLErrorMessage());
+        })
+    }
+
+    /* 性能插件 */
+    function initStats() {
+        let stats = new Stats();
+        document.body.appendChild(stats.domElement);
+        return stats;
+    }
+
+    /* 窗口变动触发 */
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    /* 数据更新 */
+    function update() {
+        stats.update();
+    }
+
+    /* 初始化 */
+    function init() {
+        initScene();
+        initCamera();
+        initRender();
+        initLight();
+        initControls();
+        initContent();
+        initGui();
+        /* 监听事件 */
+        window.addEventListener('resize', onWindowResize, false);
+    }
+
+    /* 循环渲染 */
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        update();
+    }
+
+    /* 初始加载 */
+    (function () {
+        console.log("three init start...");
+        init();
+        animate();
+        console.log("three init send...");
+    })();
+
+</script>
+</body>
+</html>
